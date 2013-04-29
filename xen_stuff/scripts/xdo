@@ -1,0 +1,115 @@
+#!/bin/bash
+
+
+if [ "$1" = "destroy" ] ; then
+##############################################################################
+DESTROY AN INSTANCE
+##############################################################################
+# Command executed like this:
+# xdo destroy NODE_NAME
+
+### Lets setup some variables ###
+ # Instance Name
+ instname=$2
+
+xm destroy $instname
+
+xm list
+
+elif [ "$1" = "create" ] ; then
+##############################################################################
+CREATE AN INSTANCE
+##############################################################################
+# Command executed like this:
+# xdo create NODE_NAME
+
+### Lets setup some variables ###
+ # Base Path
+ basepath="/opt/prod"
+ # Instance Name
+ instname=$2
+
+if [ ! -d "$basepath/$instname" ]; then
+   mkdir $basepath/$instname
+   cp -Rav /opt/blanks/centos/64bit/*.img $basepath/$instname/$instname.img
+else
+   echo "$basepath/$instname exists!";
+   echo "Terminating...";
+   exit 0;
+fi
+
+
+
+elif [ "$1" = "start" ] ; then
+##############################################################################
+START AN INSTANCE
+##############################################################################
+# Command executed like this:
+# xdo start NODE_NAME NODE_RAM
+
+### Lets setup some variables ###
+ # Base Path
+ basepath="/opt/prod"
+ # Instance Name
+ instname=$2
+ # RAM Count
+ instmem=$3
+
+if [ ! -d "$basepath/$instname" ]; then
+   exit 0;
+fi
+
+
+### Now we have the basic stuff we need to fire the instance ###
+
+cat /dev/null > /tmp/.$instname.cfg
+#read in template one line at the time, and replace variables
+while read line
+do
+    eval echo "$line" >> /tmp/.$instname.cfg
+done < "$basepath/scripts/xstart.template"
+
+
+### Start The Xen Instance and Cleaning Up ###
+xm create /tmp/.$instname.cfg
+xm list
+rm /tmp/.$instname.cfg
+
+elif [ "$1" = "resize" ] ; then
+##############################################################################
+RESIZE AN INSTANCE
+##############################################################################
+# Command executed like this:
+# xdo resize NODE_NAME NEW_NODE_SIZE_IN_MB
+
+### Lets setup some variables ###
+ # Base Path
+ basepath="/opt/prod"
+ # Instance Name
+ instname=$2
+ # RAM Count
+ newsize=$3
+
+dd if=/dev/zero of=$basepath/$instname/$instname.img bs=1M conv=notrunc count=1 seek=$newsize
+losetup /dev/loop0 $basepath/$instname/$instname.img
+e2fsck -f /dev/loop0
+resize2fs /dev/loop0
+e2fsck -f /dev/loop0
+losetup -d /dev/loop0
+
+
+else
+
+##############################################################################
+LIST ACTIVE INSTANCES - DEFAULT ACTION
+##############################################################################
+# Command executed like this:
+# xdo
+
+echo " ";
+echo " ";
+xm list
+
+
+
+fi

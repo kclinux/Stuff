@@ -1,0 +1,7 @@
+bootloader = \\"/usr/bin/pygrub\\"
+memory = ${instmem}
+name = \\"${instname}\\"
+vif = [ \\'bridge=xenbr1\\' ]
+disk = [\\'file:/opt/prod/${instname}/${instname}.img,sda1,w\\']
+root = \\"/dev/sda1\\"
+extra = \\"fastboot\\"
